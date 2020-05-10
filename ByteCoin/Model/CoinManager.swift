@@ -23,7 +23,6 @@ struct CoinManager {
     
     func getCoinData(currencyIndex index: Int){
         let urlString = "\(baseURL)\(currencyArray[2])"
-        print(urlString)
         performRequest(with: urlString)
     }
     
