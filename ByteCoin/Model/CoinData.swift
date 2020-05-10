@@ -9,5 +9,5 @@
 import Foundation
 
 struct CoinData: Codable{
-    var last: Float
+    var last: Double
 }

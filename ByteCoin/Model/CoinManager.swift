@@ -8,15 +8,20 @@
 
 import Foundation
 
+protocol CoinDelegate {
+    func didGetCoinData(latestPrice: Double)
+    func didGetError(_ error: Error)
+}
 
 struct CoinManager {
-    
     let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC"
     let apiKey = "NWVkZGFlNWVjODZjNGFlZGI4OTM3MDBmMTUzMzdiZTc"
     
     let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"]
     
-    func getCoinData(){
+    var coinDelegate: CoinDelegate?
+    
+    func getCoinData(currencyIndex index: Int){
         let urlString = "\(baseURL)\(currencyArray[2])"
         print(urlString)
         performRequest(with: urlString)
@@ -30,23 +35,29 @@ struct CoinManager {
             request.addValue(apiKey, forHTTPHeaderField: "x-ba-key")
             
             let task = session.dataTask(with: request) { (data, response, error) in
-
+                
+                if let error = error{
+                    self.coinDelegate?.didGetError(error)
+                }
+                
                 if let validData = data{
-                    print(String(data: data!, encoding: String.Encoding.utf8)!)
-                    self.parseJSON(coinData: validData)
+                    if let latestPrice = self.parseJSON(coinData: validData){
+                        self.coinDelegate?.didGetCoinData(latestPrice: latestPrice.last)
+                    }
                 }
             }
             task.resume()
         }
     }
     
-    func parseJSON(coinData :Data){
+    func parseJSON(coinData :Data) -> CoinData?{
         let decoder = JSONDecoder()
         do{
             let decodedData = try decoder.decode(CoinData.self, from: coinData)
-            print(decodedData)
+            return decodedData
         }catch{
-            print(error)
+            coinDelegate?.didGetError(error)
+            return nil
         }
     }
 }
